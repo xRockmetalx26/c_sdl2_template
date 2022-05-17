@@ -5,22 +5,18 @@
 #ifndef SCENE_MAIN_H
 #define SCENE_MAIN_H
 
-#include <app/scene.h>
+#include <ssdl/types.h>
 
-typedef struct SceneManager SceneManager;
-typedef struct SDL_Renderer SDL_Renderer;
-typedef struct Sprite Sprite;
+Scene new_scene_main();
 
-Scene* new_scene_main();
+bool init_main();
 
-void init_main();
-
-void handle_events_main(Scene *scene, SceneManager *scene_manager);
+void handle_events_main(Scene scene, SceneManager scene_manager);
 
 void update_main();
 
-void render_main(SDL_Renderer *renderer);
+void render_main(Renderer renderer);
 
-void delete_main();
+void delete_main(void *scene_main);
 
 #endif // SCENE_MAIN_H

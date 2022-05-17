@@ -7,35 +7,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <sdl2/SDL_events.h>
 #include <sdl2/SDL_render.h>
+#include <ssdl/scene.h>
+#include <ssdl/render_window.h>
+#include <ssdl/scene_manager.h>
+#include <ssdl/sprite.h>
+#include <ssdl/label.h>
+#include <ssdl/rectangle_shape.h>
+#include <ssdl/font.h>
+#include <ssdl/texture.h>
 
-#include <stdbool.h>
+Sprite sprite = NULL;
+Label label = NULL;
+RectangleShape rectangle_shape = NULL;
 
-#include <app/scene.h>
-#include <app/render_window.h>
-#include <app/scene_manager.h>
-#include <app/sprite.h>
-#include <app/label.h>
-#include <app/rectangle_shape.h>
-
-typedef struct SceneManager SceneManager;
-typedef struct SDL_Renderer SDL_Renderer;
-
-Sprite *sprite = NULL;
-Label *label = NULL;
-RectangleShape *rectangle_shape = NULL;
-
-Scene* new_scene_main() {
-    Scene *scene_main = (Scene*) malloc(sizeof (Scene));
-
+Scene new_scene_main() {
+    Scene scene_main = (Scene) calloc(1, SCENE_SIZE);
     if(!scene_main) {
-        puts("ERROR new_scene_main().");
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "ERROR in new_scene_main(), calloc() is null.\n");
+        return NULL;
     }
 
     scene_main->running = true;
-    scene_main->pause = false;
     scene_main->_init = init_main;
     scene_main->_handle_events = handle_events_main;
     scene_main->_update = update_main;
@@ -45,29 +38,31 @@ Scene* new_scene_main() {
     return scene_main;
 }
 
-void init_main(SDL_Renderer *renderer) {
-    sprite = new_sprite(0, 0, 128, 128);
-    load_image(renderer, sprite, "assets/images/icon.png");
+bool init_main(Renderer renderer) {
+    Texture texture = new_sprite_texture(renderer, "assets/images/icon.png");
+    sprite = new_sprite(texture, 0, 0, 128, 128);
 
-    label = new_label(128, 128, 128, 64);
-    label->color.b = 255;
-    load_text(renderer, label, "assets/fonts/default.ttf", "SDL2 Template");
+    Font font = new_font("assets/fonts/default.ttf", 14);
+    const Color color = {255, 0, 0, 255};
+    texture = new_label_texture(renderer, font, "SSDL Test", color);
+    label = new_label(texture, 128, 128, 256, 64);
 
-    rectangle_shape = new_rectangle_shape(256, 192, 128, 128);
-    rectangle_shape->color_border.r = 255;
-    rectangle_shape->color.b = 255;
+    const Color color_1 = {255, 0, 0, 255};
+    const Color outline_color = {0, 255, 0, 255};
+    texture = new_rectangle_texture(renderer, 128, 128, 6, color_1, outline_color);
+    rectangle_shape = new_rectangle_shape(texture, 384, 192, 128, 128);
 
-    load_rgba(renderer, rectangle_shape);
+    return true;
 }
 
-void handle_events_main(Scene *scene, SceneManager *scene_manager) {
-    SDL_Event event;
+void handle_events_main(Scene scene, SceneManager scene_manager) {
+    Event event;
 
     while(SDL_PollEvent(&event)) {
         switch(event.type) {
             case SDL_QUIT:
                 scene->running = false;
-                set_next_scene(scene_manager, NULL);
+                scene_manager->scene_next = NULL;
                 break;
 
             case SDL_KEYDOWN:
@@ -81,26 +76,30 @@ void handle_events_main(Scene *scene, SceneManager *scene_manager) {
 }
 
 void update_main() {
-    const uint8_t* keys = SDL_GetKeyboardState(NULL);
+    const unsigned char *keys = SDL_GetKeyboardState(NULL);
 
     if(keys[SDL_SCANCODE_A]) {
-        move(&sprite->transformable, -4.0, 0.0);
+        move_transformable(&sprite->transformable, -4, 0);
     }
 
     if(keys[SDL_SCANCODE_D]) {
-        move(&sprite->transformable, 4.0, 0.0);
+        move_transformable(&sprite->transformable, 4, 0);
     }
 
     if(keys[SDL_SCANCODE_S]) {
-        move(&sprite->transformable, 0.0, 4.0);
+        move_transformable(&sprite->transformable, 0, 4);
     }
 
     if(keys[SDL_SCANCODE_W]) {
-        move(&sprite->transformable, 0.0, -4.0);
+        move_transformable(&sprite->transformable, 0, -4);
     }
+
+    sprite->transformable.rotation += 2;
+    label->transformable.rotation -= 2;
+    rectangle_shape->transformable.rotation += 2;
 }
 
-void render_main(SDL_Renderer *renderer) {
+void render_main(Renderer renderer) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
 
@@ -115,8 +114,13 @@ void render_main(SDL_Renderer *renderer) {
     SDL_RenderPresent(renderer);
 }
 
-void delete_main() {
-    delete_label(label);
-    delete_sprite(sprite);
-    delete_rectangle_shape(rectangle_shape);
+void delete_main(void *scene_main) {
+    Scene to_delete = (Scene) scene_main;
+
+    if(to_delete) {
+        delete_sprite(sprite);
+        delete_label(label);
+        delete_rectangle_shape(rectangle_shape);
+        free(to_delete);
+    }
 }

@@ -30,7 +30,7 @@ file(GLOB_RECURSE LIB_FILES "lib/*.a")
 file(GLOB_RECURSE LIB_FILES "lib/*.*.a")
 
 # EXECUTABLE NAME
-set(APP "uno")
+set(APP "test")
 
 # FILES OUTPUT PATHS
 set(EXECUTABLE_OUTPUT_PATH "..")
