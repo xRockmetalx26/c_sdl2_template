@@ -27,7 +27,9 @@ file(GLOB_RECURSE RES_FILES "res/*.rc")
 
 # LIBRARY FILES
 file(GLOB_RECURSE LIB_FILES "lib/*.a")
-file(GLOB_RECURSE LIB_FILES "lib/*.*.a")
+
+# LINKED LIST LIBRARY
+add_library(ssdl STATIC ${C_FILES} ${CPP_FILES})
 
 # EXECUTABLE NAME
 set(APP "test")
